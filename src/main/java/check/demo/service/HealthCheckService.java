@@ -51,8 +51,6 @@ public class HealthCheckService {
             metric.setEventCode("ICMP_FAIL");
         }
 
-        // HLS는 아직 미사용 → 임시값
-
         switch (streamStatus) {
             case OK -> {
                 metric.setHlsStatus(true);
