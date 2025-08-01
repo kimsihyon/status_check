@@ -4,14 +4,28 @@ import check.demo.dto.HealthMetricEventDto;
 import check.demo.model.HealthMetric;
 import check.demo.repository.HealthMetricRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-//import check.demo.service.FfprobeChecker;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class HealthCheckService {
+
+    @Value("${RTSP_USERNAME}")
+    private String username;
+
+    @Value("${RTSP_PASSWORD}")
+    private String password;
+
+    @Value("${RTSP_PORT}")
+    private String port;
+
+    @Value("${RTSP_PATH}")
+    private String path;
 
     private final HealthMetricRepository repository;
     private final KafkaEventProducer producer;
@@ -19,10 +33,10 @@ public class HealthCheckService {
     private final FfprobeChecker ffprobeChecker;
 
     public void check(Long cctvId, String ip) {
-        IcmpChecker.IcmpResult icmp = icmpChecker.check(ip);
-        // TODO : 하드 코딩 지워야 함
-        String rtspUrl = "rtsp://nouu30133:password@" + ip + ":554/stream1";
+        String rtspUrl = String.format("rtsp://%s:%s@%s:%s%s", username, password, ip, port, path);
+        log.info("rtsp://{}:*****@{}:{}{}", username, ip, port, path);
 
+        IcmpChecker.IcmpResult icmp = icmpChecker.check(ip);
         FfprobeChecker.StreamStatus streamStatus = ffprobeChecker.check(rtspUrl);
 
         HealthMetric metric = new HealthMetric();
