@@ -10,4 +10,5 @@ public class HealthMetricEventDto {
     private LocalDateTime timestamp;
     private boolean icmpStatus;
     private boolean hlsStatus;
+    private String eventCode; // 이벤트 코드 추가
 }
