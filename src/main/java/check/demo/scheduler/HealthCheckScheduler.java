@@ -11,8 +11,9 @@ public class HealthCheckScheduler {
 
     private final HealthCheckService service;
 
-    @Scheduled(cron = "*/1 * * * * *") // 매 1초마다 실행
+    @Scheduled(cron = "*/10 * * * * *") // 매 1초마다 실행
     public void run() {
-        service.check(1L); // 예시로 cctvId = 1
+        String ip = "172.30.29.101"; // 예시 IP
+        service.check(1L, ip);
     }
 }

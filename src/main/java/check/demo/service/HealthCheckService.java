@@ -14,42 +14,28 @@ public class HealthCheckService {
 
     private final HealthMetricRepository repository;
     private final KafkaEventProducer producer;
+    private final IcmpChecker icmpChecker; // ← 의존성 주입
 
-    public void check(Long cctvId) {
-        String cctvIp = "192.168.32.32";
-        // 건강 상태 체크 로직 (예시로 단순히 상태를 저장)
-        // 실제로는 ICMP, HLS 체크 로직이 들어가야 함
-        //1. ICMP 체크
+    public void check(Long cctvId, String ip) {
         IcmpChecker.IcmpResult icmp = icmpChecker.check(ip);
+
         HealthMetric metric = new HealthMetric();
         metric.setCctvId(cctvId);
         metric.setTimestamp(LocalDateTime.now());
+
         if (icmp.isSuccess()) {
             metric.setIcmpStatus(true);
-            metric.setEventCode("CHECK_EVENT"); // 예시로 이벤트 코드 설정
-            // ICMP_OK, ICMP_LOSS
-            // rtt
+            metric.setEventCode("ICMP_OK");
         } else {
             metric.setIcmpStatus(false);
-            metric.setEventCode("CHECK_ERROR"); // 예시로 오류 이벤트 코드 설정
-            // ICMP_TIMEOUT, ICMP_FAILED
+            metric.setEventCode("ICMP_FAIL");
         }
-        //2. HLS 체크
-        metric.setHlsStatus(true); // 예시로 HLS 상태도 true로 설정
-        //3. 트래픽 체크 (예시로 단순히 상태를 저장)
 
-        // HealthMetric metric = new HealthMetric();
-        // metric.setCctvId(cctvId);
-        // metric.setTimestamp(LocalDateTime.now());
-        // metric.setIcmpStatus(false); // 예시로 오류 상태
-        // metric.setHlsStatus(true);
-        // metric.setEventCode("CHECK_EVENT"); // 예시로 이벤트 코드 설정
-        // metric.setTrafficInKbps(1.5f);
-        // metric.setTrafficOutKbps(3.2f);
+        // HLS는 아직 미사용 → 임시값
+        metric.setHlsStatus(true);
 
         repository.save(metric);
 
-        // Kafka 전송 DTO 구성
         HealthMetricEventDto dto = new HealthMetricEventDto();
         dto.setCctvId(cctvId);
         dto.setTimestamp(metric.getTimestamp());
