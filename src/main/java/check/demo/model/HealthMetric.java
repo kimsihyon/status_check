@@ -19,6 +19,7 @@ public class HealthMetric {
     private LocalDateTime timestamp;
     private boolean icmpStatus;
     private boolean hlsStatus;
-    private Float trafficInKbps;
-    private Float trafficOutKbps;
+    private String eventCode;
+    // private Float trafficInKbps;
+    // private Float trafficOutKbps;
 }

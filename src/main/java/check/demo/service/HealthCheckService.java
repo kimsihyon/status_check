@@ -14,24 +14,34 @@ public class HealthCheckService {
 
     private final HealthMetricRepository repository;
     private final KafkaEventProducer producer;
+    private final IcmpChecker icmpChecker; // ← 의존성 주입
 
-    public void check(Long cctvId) {
+    public void check(Long cctvId, String ip) {
+        IcmpChecker.IcmpResult icmp = icmpChecker.check(ip);
+
         HealthMetric metric = new HealthMetric();
         metric.setCctvId(cctvId);
         metric.setTimestamp(LocalDateTime.now());
-        metric.setIcmpStatus(false); // 예시로 오류 상태
+
+        if (icmp.isSuccess()) {
+            metric.setIcmpStatus(true);
+            metric.setEventCode("ICMP_OK");
+        } else {
+            metric.setIcmpStatus(false);
+            metric.setEventCode("ICMP_FAIL");
+        }
+
+        // HLS는 아직 미사용 → 임시값
         metric.setHlsStatus(true);
-        metric.setTrafficInKbps(1.5f);
-        metric.setTrafficOutKbps(3.2f);
 
         repository.save(metric);
 
-        // Kafka 전송 DTO 구성
         HealthMetricEventDto dto = new HealthMetricEventDto();
         dto.setCctvId(cctvId);
         dto.setTimestamp(metric.getTimestamp());
         dto.setIcmpStatus(metric.isIcmpStatus());
         dto.setHlsStatus(metric.isHlsStatus());
+        dto.setEventCode(metric.getEventCode());
 
         producer.sendEvent(dto);
     }
