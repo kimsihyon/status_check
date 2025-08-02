@@ -5,15 +5,28 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class HealthCheckScheduler {
 
     private final HealthCheckService service;
 
-    @Scheduled(cron = "*/3 * * * * *") // 매 1초마다 실행
+    //Kafka 등록 목록으로 대체 예정임돵 아직은 가데이터임
+    private final List<CctvTarget> targets = List.of(
+            new CctvTarget(1L, "172.30.29.101"),
+            new CctvTarget(2L, "172.30.29.23"),
+            new CctvTarget(3L, "172.30.29.103")
+    );
+
+    @Scheduled(cron = "*/10 * * * * *") // 10초마다 실행
     public void run() {
-        String ip = "172.30.29.101"; // 예시 IP
-        service.check(2L, ip);
+        for (CctvTarget target : targets) {
+            service.check(target.id(), target.ip()); 
+        }
     }
+
+    // 간단한 CCTV 정보 클래스
+    public record CctvTarget(Long id, String ip) {}
 }

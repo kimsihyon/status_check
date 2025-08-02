@@ -6,6 +6,7 @@ import check.demo.repository.HealthMetricRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,6 +33,7 @@ public class HealthCheckService {
     private final IcmpChecker icmpChecker; 
     private final FfprobeChecker ffprobeChecker;
 
+    @Async
     public void check(Long cctvId, String ip) {
         String rtspUrl = String.format("rtsp://%s:%s@%s:%s%s", username, password, ip, port, path);
         log.info("rtsp://{}:*****@{}:{}{}", username, ip, port, path);
