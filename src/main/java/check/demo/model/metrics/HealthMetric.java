@@ -1,4 +1,4 @@
-package check.demo.model;
+package check.demo.model.metrics;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -6,8 +6,8 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Table(name = "health_metrics")
 @Entity
+@Table(name = "health_metrics")
 @Getter
 @Setter
 public class HealthMetric {
@@ -22,6 +22,6 @@ public class HealthMetric {
     private boolean hlsStatus;
     private String eventCode;
 
-    private Double icmpAvgRttMs;         // RTT(ms) 평균
-    private Double icmpPacketLossPct;    // 패킷 손실률(%)
+    private Double icmpAvgRttMs;      // RTT 평균 (ms)
+    private Double icmpPacketLossPct; // 패킷 손실률 (%)
 }
