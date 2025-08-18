@@ -1,15 +1,15 @@
 package check.demo.service;
 
-import check.demo.dto.HealthMetricEventDto;
 import check.demo.model.FFProbeResult;
-import check.demo.model.HealthMetric;
 import check.demo.model.IcmpResult;
-import check.demo.repository.HealthMetricRepository;
+import check.demo.model.metrics.HealthMetric;
+import check.demo.repository.metrics.HealthMetricRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -33,10 +33,10 @@ public class HealthCheckService {
     private String path;
 
     private final HealthMetricRepository repository;
-    private final KafkaEventProducer producer;
     private final IcmpChecker icmpChecker;
 
     @Async
+    @Transactional("metricsTx") // 메트릭 DB 트랜잭션
     public void check(Long cctvId, String ip) {
         String rtspUrl = String.format("rtsp://%s:%s@%s:%s%s", username, password, ip, port, path);
         log.info("rtsp://{}:*****@{}:{}{}", username, ip, port, path);
@@ -74,11 +74,10 @@ public class HealthCheckService {
             }
         }
 
-        // HLS 상태 처리
+        // RTSP(HLS) 상태 처리
         switch (result.getStatus()) {
             case OK -> {
                 metric.setHlsStatus(true);
-                // ICMP가 실패한 경우에는 HLS OK라도 별도 코드 부여
                 metric.setEventCode(icmp.isSuccess() ? "HLS_OK" : "ICMP_FAIL");
             }
             case TIMEOUT -> {
@@ -95,18 +94,7 @@ public class HealthCheckService {
             }
         }
 
-        // 저장 및 Kafka 전송
+        // 메트릭 DB 저장
         repository.save(metric);
-
-        HealthMetricEventDto dto = new HealthMetricEventDto();
-        dto.setCctvId(metric.getCctvId());
-        dto.setTimestamp(metric.getEventTimestamp());
-        dto.setIcmpStatus(metric.isIcmpStatus());
-        dto.setHlsStatus(metric.isHlsStatus());
-        dto.setEventCode(metric.getEventCode());
-        dto.setIcmpAvgRttMs(metric.getIcmpAvgRttMs());
-        dto.setIcmpPacketLossPct(metric.getIcmpPacketLossPct());
-
-        producer.sendEvent(dto);
     }
 }

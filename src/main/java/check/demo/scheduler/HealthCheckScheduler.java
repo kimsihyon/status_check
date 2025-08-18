@@ -1,9 +1,12 @@
 package check.demo.scheduler;
 
+import check.demo.model.read.Cctv;
+import check.demo.repository.read.CctvRepository;
 import check.demo.service.HealthCheckService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -12,21 +15,17 @@ import java.util.List;
 public class HealthCheckScheduler {
 
     private final HealthCheckService service;
+    private final CctvRepository cctvRepository;
 
-    //Kafka 등록 목록으로 대체 예정임돵 아직은 가데이터임
-    private final List<CctvTarget> targets = List.of(
-            new CctvTarget(1L, "172.30.29.101"),
-            new CctvTarget(2L, "172.30.29.23"),
-            new CctvTarget(3L, "192.168.32.32")
-    );
-
+    // 10초마다 읽기 DB에서 대상 조회
+    @Transactional(readOnly = true, transactionManager = "readTx")
     @Scheduled(cron = "*/10 * * * * *")
     public void run() {
-        for (CctvTarget target : targets) {
-            service.check(target.id(), target.ip()); 
+        List<Cctv> targets = cctvRepository.findAll();
+        for (Cctv t : targets) {
+            if (t.getIpAddress() != null && !t.getIpAddress().isBlank()) {
+                service.check(t.getId(), t.getIpAddress()); // ICMP + ffprobe
+            }
         }
     }
-
-    // 간단한 CCTV 정보 클래스
-    public record CctvTarget(Long id, String ip) {}
 }
